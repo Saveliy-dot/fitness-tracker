@@ -1,7 +1,8 @@
-import { getLoginUrl } from "@/const";
+import { LOGIN_PATH, HOME_PATH } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
+import { useLocation } from "wouter";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
@@ -9,9 +10,10 @@ type UseAuthOptions = {
 };
 
 export function useAuth(options?: UseAuthOptions) {
-  const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } =
+  const { redirectOnUnauthenticated = false, redirectPath = LOGIN_PATH } =
     options ?? {};
   const utils = trpc.useUtils();
+  const [, setLocation] = useLocation();
 
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
@@ -38,12 +40,9 @@ export function useAuth(options?: UseAuthOptions) {
     } finally {
       utils.auth.me.setData(undefined, null);
       await utils.auth.me.invalidate();
-      // Redirect to home page after logout
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 100);
+      setLocation(HOME_PATH, { replace: true });
     }
-  }, [logoutMutation, utils]);
+  }, [logoutMutation, setLocation, utils]);
 
   const state = useMemo(() => {
     localStorage.setItem(
@@ -71,12 +70,13 @@ export function useAuth(options?: UseAuthOptions) {
     if (typeof window === "undefined") return;
     if (window.location.pathname === redirectPath) return;
 
-    window.location.href = '/login'
+    setLocation(LOGIN_PATH, { replace: true });
   }, [
     redirectOnUnauthenticated,
     redirectPath,
     logoutMutation.isPending,
     meQuery.isLoading,
+    setLocation,
     state.user,
   ]);
 

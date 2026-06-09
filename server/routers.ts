@@ -67,15 +67,14 @@ export const appRouter = router({
           throw new Error(`Test user with role ${input.role} not found`);
         }
 
-        // Create a proper session token using SDK
+        // Create a local email/password session token.
         const { sdk } = await import("./_core/sdk");
-        const sessionToken = await sdk.createSessionToken(user.openId as string, {
-          name: user.name || "",
+        const sessionToken = await sdk.createSessionToken(user, {
           expiresInMs: ONE_YEAR_MS,
         });
-        
+
         const cookieOptions = getSessionCookieOptions(ctx.req);
-        ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS, httpOnly: true, secure: true, sameSite: 'lax' });
+        ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
         return { success: true, redirectUrl: "/dashboard" };
       }),

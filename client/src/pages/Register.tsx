@@ -1,11 +1,24 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { Activity } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { trpc } from "@/lib/trpc";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function Register() {
   const [, setLocation] = useLocation();
@@ -15,6 +28,7 @@ export default function Register() {
   const [name, setName] = useState("");
   const [role, setRole] = useState<"user" | "trainer" | "admin">("user");
   const [isLoading, setIsLoading] = useState(false);
+  const utils = trpc.useUtils();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,8 +60,9 @@ export default function Register() {
 
       const data = await response.json();
       if (data.success) {
+        await utils.auth.me.invalidate();
         toast.success("Регистрация успешна!");
-        setLocation("/dashboard");
+        setLocation("/dashboard", { replace: true });
       }
     } catch (error) {
       console.error("Register error:", error);
@@ -73,7 +88,10 @@ export default function Register() {
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="email"
+                className="text-sm font-medium text-foreground"
+              >
                 Email
               </label>
               <Input
@@ -81,14 +99,17 @@ export default function Register() {
                 type="email"
                 placeholder="your@email.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 disabled={isLoading}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="name"
+                className="text-sm font-medium text-foreground"
+              >
                 Имя (опционально)
               </label>
               <Input
@@ -96,16 +117,23 @@ export default function Register() {
                 type="text"
                 placeholder="Ваше имя"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={e => setName(e.target.value)}
                 disabled={isLoading}
               />
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="role" className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="role"
+                className="text-sm font-medium text-foreground"
+              >
                 Роль
               </label>
-              <Select value={role} onValueChange={(value: any) => setRole(value)} disabled={isLoading}>
+              <Select
+                value={role}
+                onValueChange={(value: any) => setRole(value)}
+                disabled={isLoading}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -118,7 +146,10 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="password"
+                className="text-sm font-medium text-foreground"
+              >
                 Пароль
               </label>
               <Input
@@ -126,14 +157,17 @@ export default function Register() {
                 type="password"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 disabled={isLoading}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="confirmPassword"
+                className="text-sm font-medium text-foreground"
+              >
                 Подтвердить пароль
               </label>
               <Input
@@ -141,7 +175,7 @@ export default function Register() {
                 type="password"
                 placeholder="••••••••"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={e => setConfirmPassword(e.target.value)}
                 disabled={isLoading}
                 required
               />
