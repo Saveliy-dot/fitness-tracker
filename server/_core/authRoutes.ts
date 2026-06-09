@@ -3,9 +3,7 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { hashPassword, verifyPassword } from "./password";
-import jwt from "jsonwebtoken";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+import { sdk } from "./sdk";
 
 export function registerAuthRoutes(app: Express) {
   /**
@@ -22,7 +20,9 @@ export function registerAuthRoutes(app: Express) {
       }
 
       if (password.length < 6) {
-        res.status(400).json({ error: "Password must be at least 6 characters" });
+        res
+          .status(400)
+          .json({ error: "Password must be at least 6 characters" });
         return;
       }
 
@@ -53,12 +53,10 @@ export function registerAuthRoutes(app: Express) {
         return;
       }
 
-      // Create JWT token
-      const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, {
-        expiresIn: "1y",
+      // Create local session token and set cookie.
+      const token = await sdk.createSessionToken(user, {
+        expiresInMs: ONE_YEAR_MS,
       });
-
-      // Set cookie
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
@@ -110,12 +108,10 @@ export function registerAuthRoutes(app: Express) {
         lastSignedIn: new Date(),
       });
 
-      // Create JWT token
-      const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, {
-        expiresIn: "1y",
+      // Create local session token and set cookie.
+      const token = await sdk.createSessionToken(user, {
+        expiresInMs: ONE_YEAR_MS,
       });
-
-      // Set cookie
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
@@ -139,7 +135,7 @@ export function registerAuthRoutes(app: Express) {
    * Logout user
    */
   app.post("/api/auth/logout", (req: Request, res: Response) => {
-    res.clearCookie(COOKIE_NAME);
+    res.clearCookie(COOKIE_NAME, getSessionCookieOptions(req));
     res.json({ success: true });
   });
 }
