@@ -116,7 +116,7 @@ async function startServer() {
   }
 
   server.listen(port, hostname, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+    console.log(`Server running on http://${hostname}:${port}/`);
   });
 }
 
