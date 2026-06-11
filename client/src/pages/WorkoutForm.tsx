@@ -90,7 +90,7 @@ export function WorkoutForm() {
     try {
       const workout = await createWorkout.mutateAsync({
         name: name.trim(),
-        date: new Date(date),
+        date: new Date(date).toISOString(),
         notes,
         duration: duration ? parseInt(duration) : undefined,
       });

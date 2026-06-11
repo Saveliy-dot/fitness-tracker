@@ -220,7 +220,7 @@ export const appRouter = router({
       .input(
         z.object({
           name: z.string().min(1).optional(),
-          date: z.date(),
+          date: z.string().transform((val) => new Date(val)),
           notes: z.string().optional(),
           duration: z.number().optional(),
         })
