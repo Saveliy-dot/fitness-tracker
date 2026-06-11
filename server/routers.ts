@@ -220,7 +220,7 @@ export const appRouter = router({
       .input(
         z.object({
           name: z.string().min(1).optional(),
-          date: z.date(),
+          date: z.string().transform((val) => new Date(val)),
           notes: z.string().optional(),
           duration: z.number().optional(),
         })
@@ -229,15 +229,13 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new Error("Database not available");
 
-        const result = await db.insert(workouts).values([
-          {
-            userId: ctx.user.id,
-            name: input.name?.trim() || "Тренировка",
-            date: input.date,
-            notes: input.notes,
-            duration: input.duration,
-          },
-        ]);
+        const result = await db.insert(workouts).values({
+          userId: ctx.user.id,
+          name: input.name?.trim() || "Тренировка",
+          date: input.date.toISOString().split("T")[0],
+          notes: input.notes ?? null,
+          duration: input.duration ?? null,
+        });
 
         const insertId = Array.isArray(result) ? result[0]?.insertId : (result as any)?.insertId;
         if (insertId) {
