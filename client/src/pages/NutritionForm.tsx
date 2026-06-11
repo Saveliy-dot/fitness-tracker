@@ -18,19 +18,23 @@ export function NutritionForm() {
 
   const { data: foods, isLoading: foodsLoading, error: foodsError } = trpc.foods.list.useQuery();
   const utils = trpc.useUtils();
-  const addMeal = trpc.meals.create.useMutation({
-    onSuccess: () => {
-      utils.meals.invalidate();
-      setOpen(false);
-      setFoodSearch("");
-      setQuantity("100");
-    },
-  });
+  const addMeal = trpc.meals.create.useMutation();
 
   // Filter foods by search
   const filteredFoods = foods?.filter((food: any) =>
     food.name.toLowerCase().includes(foodSearch.toLowerCase())
   ) || [];
+  const selectedFoodItem = foods?.find((food: any) => food.id.toString() === selectedFood);
+  const quantityValue = parseFloat(quantity) || 0;
+  const macroMultiplier = quantityValue / 100;
+  const calculatedMacros = selectedFoodItem
+    ? {
+        calories: Number(selectedFoodItem.calories || 0) * macroMultiplier,
+        protein: Number(selectedFoodItem.protein || 0) * macroMultiplier,
+        fat: Number(selectedFoodItem.fat || 0) * macroMultiplier,
+        carbs: Number(selectedFoodItem.carbs || 0) * macroMultiplier,
+      }
+    : null;
 
   const handleSubmit = async () => {
     const errors: string[] = [];
@@ -60,7 +64,8 @@ export function NutritionForm() {
         mealType,
       });
 
-      toast.success("Прием пищи успешно добавлен!");
+      await utils.meals.invalidate();
+      toast.success("Прием пищи успешно добавлен с рассчитанными КБЖУ!");
       setOpen(false);
       setDate(new Date().toISOString().split('T')[0]);
       setQuantity("100");
@@ -161,6 +166,30 @@ export function NutritionForm() {
               onChange={(e) => setQuantity(e.target.value)}
             />
           </div>
+
+          {calculatedMacros && (
+            <div className="rounded-lg bg-muted p-3 text-sm">
+              <p className="mb-2 font-medium text-foreground">Автоматический расчет КБЖУ</p>
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div>
+                  <p className="font-semibold text-primary">{Math.round(calculatedMacros.calories)}</p>
+                  <p className="text-muted-foreground">ккал</p>
+                </div>
+                <div>
+                  <p className="font-semibold text-accent">{Math.round(calculatedMacros.protein)}г</p>
+                  <p className="text-muted-foreground">белки</p>
+                </div>
+                <div>
+                  <p className="font-semibold text-primary">{Math.round(calculatedMacros.fat)}г</p>
+                  <p className="text-muted-foreground">жиры</p>
+                </div>
+                <div>
+                  <p className="font-semibold text-accent">{Math.round(calculatedMacros.carbs)}г</p>
+                  <p className="text-muted-foreground">углеводы</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-2">
             <Button onClick={handleSubmit} className="btn-primary flex-1" disabled={addMeal.isPending || !selectedFood}>

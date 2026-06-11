@@ -1,11 +1,13 @@
+import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 export function ProgressCharts() {
+  const today = useMemo(() => new Date(), []);
   const { data: weights } = trpc.weightHistory.list.useQuery({});
   const { data: workouts } = trpc.workouts.list.useQuery({});
-  const { data: meals } = trpc.meals.list.useQuery(new Date());
+  const { data: meals } = trpc.meals.list.useQuery(today);
 
   // Prepare weight data
   const weightData = weights?.map((w: any) => ({
@@ -17,10 +19,7 @@ export function ProgressCharts() {
   const calorieData: Record<string, number> = {};
   meals?.forEach((meal: any) => {
     const date = new Date(meal.date).toLocaleDateString();
-    const quantity = parseFloat(meal.quantity) || 0;
-    const multiplier = quantity / 100;
-    const calories = (meal.food?.calories || 0) * multiplier;
-    calorieData[date] = (calorieData[date] || 0) + calories;
+    calorieData[date] = (calorieData[date] || 0) + (Number(meal.calories) || 0);
   });
 
   const calorieChartData = Object.entries(calorieData).map(([date, calories]) => ({

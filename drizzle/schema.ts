@@ -111,6 +111,7 @@ export const workouts = mysqlTable(
   {
     id: int("id").autoincrement().primaryKey(),
     userId: int("userId").notNull(),
+    name: varchar("name", { length: 255 }).notNull().default("Тренировка"),
     date: date("date").notNull(),
     notes: text("notes"),
     duration: int("duration"), // minutes
