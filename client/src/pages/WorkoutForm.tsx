@@ -114,7 +114,10 @@ export function WorkoutForm() {
       setDuration("");
       setExercises([]);
     } catch (error) {
-      toast.error("Ошибка при добавлении тренировки");
+        console.error("FULL ERROR:", error);
+        toast.error(
+          error instanceof Error ? error.message : "Ошибка при добавлении тренировки"
+        );
     }
   };
 
