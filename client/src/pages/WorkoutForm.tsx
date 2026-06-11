@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 export function WorkoutForm() {
   const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState("");
   const [duration, setDuration] = useState("");
@@ -20,6 +21,7 @@ export function WorkoutForm() {
   const [weight, setWeight] = useState("");
 
   const { data: exerciseList, isLoading: exercisesLoading, error: exercisesError } = trpc.exercises.list.useQuery({});
+  const utils = trpc.useUtils();
   const createWorkout = trpc.workouts.create.useMutation();
   const addExercise = trpc.workouts.addExercise.useMutation();
 
@@ -64,6 +66,10 @@ export function WorkoutForm() {
   const handleSubmit = async () => {
     const errors: string[] = [];
 
+    if (!name.trim()) {
+      errors.push("Введите название тренировки");
+    }
+
     if (!date) {
       errors.push("Выберите дату");
     }
@@ -83,6 +89,7 @@ export function WorkoutForm() {
 
     try {
       const workout = await createWorkout.mutateAsync({
+        name: name.trim(),
         date: new Date(date),
         notes,
         duration: duration ? parseInt(duration) : undefined,
@@ -98,8 +105,10 @@ export function WorkoutForm() {
         });
       }
 
+      await utils.workouts.invalidate();
       toast.success("Тренировка успешно добавлена!");
       setOpen(false);
+      setName("");
       setDate(new Date().toISOString().split('T')[0]);
       setNotes("");
       setDuration("");
@@ -122,6 +131,16 @@ export function WorkoutForm() {
           <DialogTitle>Добавить новую тренировку</DialogTitle>
         </DialogHeader>
         <div className="space-y-6">
+          <div>
+            <Label htmlFor="name">Название тренировки</Label>
+            <Input
+              id="name"
+              placeholder="Например: Силовая тренировка"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <Label htmlFor="date">Дата</Label>

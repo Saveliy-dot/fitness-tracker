@@ -5,9 +5,11 @@ import { ProgressCharts } from "./ProgressCharts";
 import { trpc } from "@/lib/trpc";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useMemo } from "react";
 
 export default function Nutrition() {
-  const { data: meals, refetch } = trpc.meals.list.useQuery(new Date());
+  const today = useMemo(() => new Date(), []);
+  const { data: meals, refetch } = trpc.meals.list.useQuery(today);
   const deleteMeal = trpc.meals.delete.useMutation();
 
   const handleDeleteMeal = async (mealId: number) => {
@@ -23,13 +25,11 @@ export default function Nutrition() {
   // Calculate KBZHU totals (accounting for quantity in grams)
   const totals = meals?.reduce(
     (acc, meal: any) => {
-      const quantity = parseFloat(meal.quantity) || 0; // grams
-      const multiplier = quantity / 100; // foods are stored per 100g
       return {
-        calories: acc.calories + ((meal.food?.calories || 0) * multiplier),
-        protein: acc.protein + ((meal.food?.protein || 0) * multiplier),
-        fat: acc.fat + ((meal.food?.fat || 0) * multiplier),
-        carbs: acc.carbs + ((meal.food?.carbs || 0) * multiplier),
+        calories: acc.calories + (Number(meal.calories) || 0),
+        protein: acc.protein + (Number(meal.protein) || 0),
+        fat: acc.fat + (Number(meal.fat) || 0),
+        carbs: acc.carbs + (Number(meal.carbs) || 0),
       };
     },
     { calories: 0, protein: 0, fat: 0, carbs: 0 }
@@ -76,7 +76,12 @@ export default function Nutrition() {
                   <p className="text-sm text-muted-foreground">{meal.mealType} • {meal.quantity}г</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <p className="text-sm font-medium text-accent">{Math.round((meal.food?.calories || 0) * (meal.quantity / 100))} кал</p>
+                  <div className="text-right text-sm">
+                    <p className="font-medium text-accent">{Math.round(Number(meal.calories) || 0)} кал</p>
+                    <p className="text-muted-foreground">
+                      Б {Math.round(Number(meal.protein) || 0)}г • Ж {Math.round(Number(meal.fat) || 0)}г • У {Math.round(Number(meal.carbs) || 0)}г
+                    </p>
+                  </div>
                   <Button
                     variant="ghost"
                     size="sm"

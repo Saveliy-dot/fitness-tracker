@@ -251,11 +251,29 @@ export async function getWorkoutExercises(workoutId: number) {
 }
 
 // Meal helpers
+function withCalculatedMacros(row: { meal: typeof meals.$inferSelect; food: typeof foods.$inferSelect }) {
+  const quantity = Number(row.meal.quantity ?? 0);
+  const multiplier = quantity / 100;
+  const calories = Number(row.food.calories ?? 0) * multiplier;
+  const protein = Number(row.food.protein ?? 0) * multiplier;
+  const fat = Number(row.food.fat ?? 0) * multiplier;
+  const carbs = Number(row.food.carbs ?? 0) * multiplier;
+
+  return {
+    ...row.meal,
+    food: row.food,
+    calories,
+    protein,
+    fat,
+    carbs,
+  };
+}
+
 export async function getUserMeals(userId: number, date: Date) {
   const db = await getDb();
   if (!db) return [];
 
-  return db
+  const rows = await db
     .select({
       meal: meals,
       food: foods,
@@ -264,13 +282,15 @@ export async function getUserMeals(userId: number, date: Date) {
     .innerJoin(foods, eq(meals.foodId, foods.id))
     .where(and(eq(meals.userId, userId), eq(meals.date, date)))
     .orderBy(asc(meals.mealType));
+
+  return rows.map(withCalculatedMacros);
 }
 
 export async function getUserMealsByDateRange(userId: number, startDate: Date, endDate: Date) {
   const db = await getDb();
   if (!db) return [];
 
-  return db
+  const rows = await db
     .select({
       meal: meals,
       food: foods,
@@ -285,6 +305,8 @@ export async function getUserMealsByDateRange(userId: number, startDate: Date, e
       )
     )
     .orderBy(desc(meals.date));
+
+  return rows.map(withCalculatedMacros);
 }
 
 // Food helpers

@@ -35,8 +35,9 @@ export default function Workouts() {
             <Card key={workout.id} className="card-base">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-foreground">{new Date(workout.date).toLocaleDateString()}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{workout.notes}</p>
+                  <h3 className="font-semibold text-foreground">{workout.name || "Тренировка"}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{new Date(workout.date).toLocaleDateString()}</p>
+                  {workout.notes && <p className="mt-1 text-sm text-muted-foreground">{workout.notes}</p>}
                 </div>
                 <div className="flex items-center gap-3 ml-4">
                   <span className="badge-primary">{workout.duration || 0} мин</span>

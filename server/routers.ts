@@ -219,6 +219,7 @@ export const appRouter = router({
     create: protectedProcedure
       .input(
         z.object({
+          name: z.string().min(1).optional(),
           date: z.date(),
           notes: z.string().optional(),
           duration: z.number().optional(),
@@ -228,18 +229,23 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new Error("Database not available");
 
-        await db.insert(workouts).values([
+        const result = await db.insert(workouts).values([
           {
             userId: ctx.user.id,
+            name: input.name?.trim() || "Тренировка",
             date: input.date,
             notes: input.notes,
             duration: input.duration,
           },
         ]);
 
-        // Get the created workout to return with ID
+        const insertId = Array.isArray(result) ? result[0]?.insertId : (result as any)?.insertId;
+        if (insertId) {
+          return getWorkoutById(insertId);
+        }
+
         const createdWorkouts = await getUserWorkouts(ctx.user.id);
-        return createdWorkouts[createdWorkouts.length - 1];
+        return createdWorkouts[0];
       }),
 
     delete: protectedProcedure.input(z.number()).mutation(async ({ ctx, input }) => {
@@ -344,7 +350,11 @@ export const appRouter = router({
           },
         ]);
 
-        return result;
+        const insertId = Array.isArray(result) ? result[0]?.insertId : (result as any)?.insertId;
+        if (!insertId) return result;
+
+        const createdMeals = await getUserMeals(ctx.user.id, input.date);
+        return createdMeals.find((meal: any) => meal.id === insertId) ?? result;
       }),
 
     delete: protectedProcedure.input(z.number()).mutation(async ({ ctx, input }) => {
